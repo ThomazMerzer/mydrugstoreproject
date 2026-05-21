@@ -39,11 +39,6 @@ class _MainScreenState extends State<MainScreen> {
   // Ширина столбцов (в логических пикселях)
   double _nameColumnWidth = 300;
   double _quantityColumnWidth = 100;
-  double _priceColumnWidth = 150;
-  
-  // Флаг для отслеживания перетаскивания
-  bool _isDraggingName = false;
-  bool _isDraggingQuantity = false;
   
   // Пул препаратов для случайного добавления
   final List<Map<String, dynamic>> _drugPool = [
@@ -154,7 +149,7 @@ class _MainScreenState extends State<MainScreen> {
                           child: Container(
                             width: 8,
                             height: 30,
-                            color: _isDraggingName ? Colors.blue : Colors.grey[400],
+                            color: Colors.grey[400],
                           ),
                         ),
                       ),
@@ -174,7 +169,7 @@ class _MainScreenState extends State<MainScreen> {
                           child: Container(
                             width: 8,
                             height: 30,
-                            color: _isDraggingQuantity ? Colors.blue : Colors.grey[400],
+                            color: Colors.grey[400],
                           ),
                         ),
                       ),
@@ -243,169 +238,159 @@ class _MainScreenState extends State<MainScreen> {
                 ),
                 const SizedBox(height: 20),
                 // Кнопка с разделенными иконкой и текстом
-                ButtonStyleButton(
-                  onPressed: () => _showMessage('Кнопка "Режим продаж" нажата'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ).copyWith(
-                    alignment: Alignment.centerLeft,
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => _showMessage('Кнопка "Режим продаж" нажата'),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.centerLeft,
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: 12,
+                          top: 0,
+                          bottom: 0,
+                          child: Icon(Icons.point_of_sale),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(
+                            child: Text('Режим продаж'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  builder: (context, states) {
-                    return SizedBox(
-                      height: 48,
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            left: 12,
-                            top: 0,
-                            bottom: 0,
-                            child: Icon(Icons.point_of_sale),
-                          ),
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                            child: Center(
-                              child: Text('Режим продаж'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
                 ),
                 const SizedBox(height: 12),
-                ButtonStyleButton(
-                  onPressed: () => _showMessage('Кнопка "Режим приемки" нажата'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ).copyWith(
-                    alignment: Alignment.centerLeft,
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => _showMessage('Кнопка "Режим приемки" нажата'),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.centerLeft,
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: 12,
+                          top: 0,
+                          bottom: 0,
+                          child: Icon(Icons.inventory),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(
+                            child: Text('Режим приемки'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  builder: (context, states) {
-                    return SizedBox(
-                      height: 48,
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            left: 12,
-                            top: 0,
-                            bottom: 0,
-                            child: Icon(Icons.inventory),
-                          ),
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                            child: Center(
-                              child: Text('Режим приемки'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
                 ),
                 const SizedBox(height: 12),
-                ButtonStyleButton(
-                  onPressed: () => _showMessage('Кнопка "Энциклопедия" нажата'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ).copyWith(
-                    alignment: Alignment.centerLeft,
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => _showMessage('Кнопка "Энциклопедия" нажата'),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.centerLeft,
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: 12,
+                          top: 0,
+                          bottom: 0,
+                          child: Icon(Icons.book),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(
+                            child: Text('Энциклопедия'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  builder: (context, states) {
-                    return SizedBox(
-                      height: 48,
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            left: 12,
-                            top: 0,
-                            bottom: 0,
-                            child: Icon(Icons.book),
-                          ),
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                            child: Center(
-                              child: Text('Энциклопедия'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
                 ),
                 const SizedBox(height: 12),
-                ButtonStyleButton(
-                  onPressed: () => _showMessage('Кнопка "Настройки" нажата'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ).copyWith(
-                    alignment: Alignment.centerLeft,
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => _showMessage('Кнопка "Настройки" нажата'),
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.centerLeft,
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: 12,
+                          top: 0,
+                          bottom: 0,
+                          child: Icon(Icons.settings),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(
+                            child: Text('Настройки'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  builder: (context, states) {
-                    return SizedBox(
-                      height: 48,
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            left: 12,
-                            top: 0,
-                            bottom: 0,
-                            child: Icon(Icons.settings),
-                          ),
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                            child: Center(
-                              child: Text('Настройки'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
                 ),
                 const SizedBox(height: 12),
-                ButtonStyleButton(
-                  onPressed: _addRandomDrug,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ).copyWith(
-                    alignment: Alignment.centerLeft,
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _addRandomDrug,
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.centerLeft,
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: 12,
+                          top: 0,
+                          bottom: 0,
+                          child: Icon(Icons.add_shopping_cart),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: Center(
+                            child: Text('Добавить товар'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  builder: (context, states) {
-                    return SizedBox(
-                      height: 48,
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            left: 12,
-                            top: 0,
-                            bottom: 0,
-                            child: Icon(Icons.add_shopping_cart),
-                          ),
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                            child: Center(
-                              child: Text('Добавить товар'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
                 ),
               ],
             ),
