@@ -130,7 +130,6 @@ bool Win32Window::Create(const std::wstring& title,
 
   const POINT target_point = {static_cast<LONG>(origin.x),
                               static_cast<LONG>(origin.y)};
-  HMONITOR monitor = MonitorFromPoint(target_point, MONITOR_DEFAULTTONEAREST);
 
   // Get screen dimensions for fullscreen
   RECT rc;
