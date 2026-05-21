@@ -1,29 +1,49 @@
 ```
 # Build artifacts
-/build/
-*.dart.js
-*.js
-*.map
+*.o
+*.obj
+*.exe
+*.dll
+*.lib
+*.pdb
+*.exp
+*.ilk
+*.res
 
 # Dependencies
-.pub/
-.packages
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.egg-info/
+dist/
+build/
+target/
+.gradle/
 
 # Logs and temp files
 *.log
 *.tmp
+*.swp
+*.swo
 
 # Environment
 .env
 .env.local
 *.env.*
 
-# Editor/IDE
-.idea/
+# Editors
 .vscode/
+.idea/
 *.swp
 *.swo
 
-# Testing
+# Coverage reports
 coverage/
+htmlcov/
+.coverage
+
+# OS generated files
+.DS_Store
+Thumbs.db
 ```

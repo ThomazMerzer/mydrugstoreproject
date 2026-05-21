@@ -131,8 +131,6 @@ bool Win32Window::Create(const std::wstring& title,
   const POINT target_point = {static_cast<LONG>(origin.x),
                               static_cast<LONG>(origin.y)};
   HMONITOR monitor = MonitorFromPoint(target_point, MONITOR_DEFAULTTONEAREST);
-  UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
-  double scale_factor = dpi / 96.0;
 
   // Get screen dimensions for fullscreen
   RECT rc;
