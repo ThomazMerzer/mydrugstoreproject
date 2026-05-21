@@ -32,14 +32,18 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   // Список товаров в чеке
   final List<Map<String, dynamic>> _cartItems = [];
-  
+
   // Общая сумма
   double _totalAmount = 0.0;
-  
+
   // Ширина столбцов (в логических пикселях)
   double _nameColumnWidth = 300;
   double _quantityColumnWidth = 100;
-  
+
+  // Минимальные ширины столбцов (вычисляются по заголовкам)
+  double _minNameWidth = 120;
+  double _minQuantityWidth = 100;
+
   // Пул препаратов для случайного добавления
   final List<Map<String, dynamic>> _drugPool = [
     {'name': 'Парацетамол', 'price': 50.0},
@@ -50,6 +54,29 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   final Random _random = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    // Вычисляем минимальные ширины после постройки контекста
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _minNameWidth = _getTextWidth('Наименование');
+        _minQuantityWidth = _getTextWidth('Количество');
+      });
+    });
+  }
+
+  // Вычислить ширину текста
+  double _getTextWidth(String text) {
+    final textPainter = TextPainter(
+      text: TextSpan(text: text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    return textPainter.size.width + 16; // Добавляем отступы
+  }
 
   // Показать диалог с сообщением
   void _showMessage(String message) {
@@ -68,6 +95,16 @@ class _MainScreenState extends State<MainScreen> {
       _calculateTotal();
     });
     _showMessage('Чек очищен');
+  }
+
+  // Удалить последнюю позицию
+  void _removeLastItem() {
+    if (_cartItems.isEmpty) return;
+    setState(() {
+      _cartItems.removeLast();
+      _calculateTotal();
+    });
+    _showMessage('Позиция удалена');
   }
 
   // Рассчитать общую сумму
@@ -126,7 +163,7 @@ class _MainScreenState extends State<MainScreen> {
                     children: [
                       SizedBox(
                         width: _nameColumnWidth,
-                        child: const Text('Наименование', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: const Text('Наименование', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                       // Разделитель для изменения ширины первого столбца
                       MouseRegion(
@@ -134,11 +171,11 @@ class _MainScreenState extends State<MainScreen> {
                         child: GestureDetector(
                           onPanUpdate: (details) {
                             setState(() {
-                              _nameColumnWidth = (_nameColumnWidth + details.delta.dx).clamp(100, 600);
+                              _nameColumnWidth = (_nameColumnWidth + details.delta.dx).clamp(_minNameWidth, 600);
                             });
                           },
                           child: Container(
-                            width: 8,
+                            width: 1,
                             height: 30,
                             color: Colors.grey[400],
                           ),
@@ -154,18 +191,18 @@ class _MainScreenState extends State<MainScreen> {
                         child: GestureDetector(
                           onPanUpdate: (details) {
                             setState(() {
-                              _quantityColumnWidth = (_quantityColumnWidth + details.delta.dx).clamp(50, 200);
+                              _quantityColumnWidth = (_quantityColumnWidth + details.delta.dx).clamp(_minQuantityWidth, 200);
                             });
                           },
                           child: Container(
-                            width: 8,
+                            width: 1,
                             height: 30,
                             color: Colors.grey[400],
                           ),
                         ),
                       ),
                       Expanded(
-                        child: Text('Цена', textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text('Цена', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -174,40 +211,38 @@ class _MainScreenState extends State<MainScreen> {
                 Expanded(
                   child: _cartItems.isEmpty
                       ? Center(
-                          child: Text(
-                            'Чек пуст. Отсканируйте штрихкод или QR-код товара.',
-                            style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                          ),
-                        )
+                    child: Text(
+                      'Чек пуст. Отсканируйте штрихкод или QR-код товара.',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    ),
+                  )
                       : ListView.builder(
-                          itemCount: _cartItems.length,
-                          itemBuilder: (context, index) {
-                            final item = _cartItems[index];
-                            return Container(
-                              margin: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 4.0),
-                              padding: const EdgeInsets.all(8.0),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey[300]!),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: _nameColumnWidth,
-                                    child: Text(item['name'], overflow: TextOverflow.ellipsis),
-                                  ),
-                                  SizedBox(
-                                    width: _quantityColumnWidth,
-                                    child: Text('${item['quantity']}', textAlign: TextAlign.center),
-                                  ),
-                                  Expanded(
-                                    child: Text('${(item['price'] as double).toStringAsFixed(2)} ₽', textAlign: TextAlign.right),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                    itemCount: _cartItems.length,
+                    itemBuilder: (context, index) {
+                      final item = _cartItems[index];
+                      final isEven = index % 2 == 1;
+                      return Container(
+                        margin: const EdgeInsets.symmetric(vertical: 1.0),
+                        padding: const EdgeInsets.all(8.0),
+                        color: isEven ? Colors.grey[200] : Colors.white,
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: _nameColumnWidth,
+                              child: Text(item['name'], textAlign: TextAlign.center, overflow: TextOverflow.ellipsis),
+                            ),
+                            SizedBox(
+                              width: _quantityColumnWidth,
+                              child: Text('${item['quantity']}', textAlign: TextAlign.center),
+                            ),
+                            Expanded(
+                              child: Text('${(item['price'] as double).toStringAsFixed(2)} ₽', textAlign: TextAlign.center),
+                            ),
+                          ],
                         ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -414,13 +449,11 @@ class _MainScreenState extends State<MainScreen> {
             ),
             const SizedBox(width: 12),
             ElevatedButton.icon(
-              onPressed: _cartItems.isEmpty 
-                ? null 
-                : () => _showMessage('Кнопка "Удалить последнюю позицию" нажата'),
-              icon: const Icon(Icons.remove_shopping_cart),
+              onPressed: _removeLastItem,
+              icon: const Icon(Icons.delete),
               label: const Text('Удалить позицию'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange[700],
+                backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               ),
@@ -433,7 +466,7 @@ class _MainScreenState extends State<MainScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               ),
             ),
           ],
