@@ -1,77 +1,26 @@
 ```
 # Build artifacts
+*.dart.js
+*.map
 build/
-*.o
-*.obj
-*.exe
-*.dll
-*.so
-*.a
-*.out
+dist/
+out/
 
 # Dependencies
-**/node_modules/
-**/.venv/
-**/venv/
-**/__pycache__/
-**/.mypy_cache/
-**/.pytest_cache/
-**/.gradle/
-**/target/
-
-# Flutter/Dart specific
+.pub-cache/
 .dart_tool/
 .packages
-.pub-cache/
-pubspec.lock
-
-# Windows
-windows/flutter/ephemeral/
-windows/runner/Release/
-windows/runner/Debug/
-
-# Logs
-*.log
-**/*.log
 
 # Environment
 .env
 .env.local
 *.env.*
 
-# Editors
-.vscode/
-.idea/
-*.swp
-*.swo
-*.tmp
+# Logs
+*.log
+**/logs/
 
-# OS
+# OS generated files
 .DS_Store
 Thumbs.db
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
 ```
