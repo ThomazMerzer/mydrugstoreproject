@@ -1,6 +1,6 @@
 ```
 # Build artifacts
-*.class
+build/
 *.o
 *.obj
 *.exe
@@ -8,35 +8,47 @@
 *.so
 *.a
 *.out
-build/
-dist/
-target/
 
 # Dependencies
-node_modules/
-venv/
-.venv/
-__pycache__/
-.mypy_cache/
-.pytest_cache/
-.gradle/
+**/node_modules/
+**/.venv/
+**/venv/
+**/__pycache__/
+**/.mypy_cache/
+**/.pytest_cache/
+**/.gradle/
+**/target/
 
-# Editor/IDE files
+# Flutter/Dart specific
+.dart_tool/
+.packages
+.pub-cache/
+pubspec.lock
+
+# Windows
+windows/flutter/ephemeral/
+windows/runner/Release/
+windows/runner/Debug/
+
+# Logs
+*.log
+**/*.log
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
 *.tmp
 
-# System files
+# OS
 .DS_Store
 Thumbs.db
-.env
-.env.local
-*.env.*
-
-# Logs
-*.log
 
 # Coverage
 coverage/

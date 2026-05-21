@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -35,8 +36,25 @@ class _MainScreenState extends State<MainScreen> {
   // Общая сумма
   double _totalAmount = 0.0;
   
-  // Скидка в процентах
-  double _discountPercent = 0.0;
+  // Ширина столбцов (в логических пикселях)
+  double _nameColumnWidth = 300;
+  double _quantityColumnWidth = 100;
+  double _priceColumnWidth = 150;
+  
+  // Флаг для отслеживания перетаскивания
+  bool _isDraggingName = false;
+  bool _isDraggingQuantity = false;
+  
+  // Пул препаратов для случайного добавления
+  final List<Map<String, dynamic>> _drugPool = [
+    {'name': 'Парацетамол', 'price': 50.0},
+    {'name': 'Сальбутамол', 'price': 120.0},
+    {'name': 'Пластырь', 'price': 80.0},
+    {'name': 'Бинт', 'price': 45.0},
+    {'name': 'Крем для рук', 'price': 150.0},
+  ];
+
+  final Random _random = Random();
 
   // Показать диалог с сообщением
   void _showMessage(String message) {
@@ -73,17 +91,22 @@ class _MainScreenState extends State<MainScreen> {
       sum += (item['price'] as double) * (item['quantity'] as int);
     }
     setState(() {
-      _totalAmount = sum * (1 - _discountPercent / 100);
+      _totalAmount = sum;
     });
   }
 
-  // Применить скидку
-  void _applyDiscount(double percent) {
+  // Добавить случайный препарат
+  void _addRandomDrug() {
+    final drug = _drugPool[_random.nextInt(_drugPool.length)];
     setState(() {
-      _discountPercent = percent;
+      _cartItems.add({
+        'name': drug['name'],
+        'quantity': 1,
+        'price': drug['price'],
+      });
       _calculateTotal();
     });
-    _showMessage('Скидка $percent% применена');
+    _showMessage('Добавлен препарат: ${drug['name']}');
   }
 
   // Оплата
@@ -109,16 +132,55 @@ class _MainScreenState extends State<MainScreen> {
             flex: 3,
             child: Column(
               children: [
-                // Заголовок таблицы
+                // Заголовок таблицы с изменяемой шириной столбцов
                 Container(
                   padding: const EdgeInsets.all(8.0),
                   color: Colors.grey[200],
                   child: Row(
                     children: [
-                      Expanded(flex: 4, child: Text('Наименование', style: TextStyle(fontWeight: FontWeight.bold))),
-                      Expanded(flex: 1, child: Text('Кол-во', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                      Expanded(flex: 2, child: Text('Цена', textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold))),
-                      Expanded(flex: 1, child: Text('Действие', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                      SizedBox(
+                        width: _nameColumnWidth,
+                        child: const Text('Наименование', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                      // Разделитель для изменения ширины первого столбца
+                      MouseRegion(
+                        cursor: SystemMouseCursors.resizeLeftRight,
+                        child: GestureDetector(
+                          onPanUpdate: (details) {
+                            setState(() {
+                              _nameColumnWidth = (_nameColumnWidth + details.delta.dx).clamp(100, 600);
+                            });
+                          },
+                          child: Container(
+                            width: 8,
+                            height: 30,
+                            color: _isDraggingName ? Colors.blue : Colors.grey[400],
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: _quantityColumnWidth,
+                        child: const Text('Количество', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                      // Разделитель для изменения ширины второго столбца
+                      MouseRegion(
+                        cursor: SystemMouseCursors.resizeLeftRight,
+                        child: GestureDetector(
+                          onPanUpdate: (details) {
+                            setState(() {
+                              _quantityColumnWidth = (_quantityColumnWidth + details.delta.dx).clamp(50, 200);
+                            });
+                          },
+                          child: Container(
+                            width: 8,
+                            height: 30,
+                            color: _isDraggingQuantity ? Colors.blue : Colors.grey[400],
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text('Цена', textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
                     ],
                   ),
                 ),
@@ -144,16 +206,16 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Expanded(flex: 4, child: Text(item['name'], overflow: TextOverflow.ellipsis)),
-                                  Expanded(flex: 1, child: Text('${item['quantity']}', textAlign: TextAlign.center)),
-                                  Expanded(flex: 2, child: Text('${(item['price'] as double).toStringAsFixed(2)} ₽', textAlign: TextAlign.right)),
+                                  SizedBox(
+                                    width: _nameColumnWidth,
+                                    child: Text(item['name'], overflow: TextOverflow.ellipsis),
+                                  ),
+                                  SizedBox(
+                                    width: _quantityColumnWidth,
+                                    child: Text('${item['quantity']}', textAlign: TextAlign.center),
+                                  ),
                                   Expanded(
-                                    flex: 1,
-                                    child: IconButton(
-                                      icon: const Icon(Icons.delete, color: Colors.red),
-                                      onPressed: () => _removeItem(index),
-                                      tooltip: 'Удалить',
-                                    ),
+                                    child: Text('${(item['price'] as double).toStringAsFixed(2)} ₽', textAlign: TextAlign.right),
                                   ),
                                 ],
                               ),
@@ -180,40 +242,170 @@ class _MainScreenState extends State<MainScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton.icon(
+                // Кнопка с разделенными иконкой и текстом
+                ButtonStyleButton(
                   onPressed: () => _showMessage('Кнопка "Режим продаж" нажата'),
-                  icon: const Icon(Icons.point_of_sale),
-                  label: const Text('Режим продаж'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
+                  ).copyWith(
+                    alignment: Alignment.centerLeft,
                   ),
+                  builder: (context, states) {
+                    return SizedBox(
+                      height: 48,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            left: 12,
+                            top: 0,
+                            bottom: 0,
+                            child: Icon(Icons.point_of_sale),
+                          ),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: Text('Режим продаж'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
-                ElevatedButton.icon(
+                ButtonStyleButton(
                   onPressed: () => _showMessage('Кнопка "Режим приемки" нажата'),
-                  icon: const Icon(Icons.inventory),
-                  label: const Text('Режим приемки'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
+                  ).copyWith(
+                    alignment: Alignment.centerLeft,
                   ),
+                  builder: (context, states) {
+                    return SizedBox(
+                      height: 48,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            left: 12,
+                            top: 0,
+                            bottom: 0,
+                            child: Icon(Icons.inventory),
+                          ),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: Text('Режим приемки'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
-                ElevatedButton.icon(
+                ButtonStyleButton(
                   onPressed: () => _showMessage('Кнопка "Энциклопедия" нажата'),
-                  icon: const Icon(Icons.book),
-                  label: const Text('Энциклопедия'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
+                  ).copyWith(
+                    alignment: Alignment.centerLeft,
                   ),
+                  builder: (context, states) {
+                    return SizedBox(
+                      height: 48,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            left: 12,
+                            top: 0,
+                            bottom: 0,
+                            child: Icon(Icons.book),
+                          ),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: Text('Энциклопедия'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
-                ElevatedButton.icon(
+                ButtonStyleButton(
                   onPressed: () => _showMessage('Кнопка "Настройки" нажата'),
-                  icon: const Icon(Icons.settings),
-                  label: const Text('Настройки'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
+                  ).copyWith(
+                    alignment: Alignment.centerLeft,
                   ),
+                  builder: (context, states) {
+                    return SizedBox(
+                      height: 48,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            left: 12,
+                            top: 0,
+                            bottom: 0,
+                            child: Icon(Icons.settings),
+                          ),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: Text('Настройки'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                ButtonStyleButton(
+                  onPressed: _addRandomDrug,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ).copyWith(
+                    alignment: Alignment.centerLeft,
+                  ),
+                  builder: (context, states) {
+                    return SizedBox(
+                      height: 48,
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            left: 12,
+                            top: 0,
+                            bottom: 0,
+                            child: Icon(Icons.add_shopping_cart),
+                          ),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: Text('Добавить товар'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -226,99 +418,47 @@ class _MainScreenState extends State<MainScreen> {
           color: Colors.grey[100],
           border: Border(top: BorderSide(color: Colors.grey[300]!)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Строка с суммой и скидками
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Общая сумма:',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                    ),
-                    Text(
-                      '${_totalAmount.toStringAsFixed(2)} ₽',
-                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.green),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Скидки:', style: TextStyle(fontSize: 16)),
-                    const SizedBox(width: 8),
-                    OutlinedButton(
-                      onPressed: () => _applyDiscount(5),
-                      child: const Text('5%'),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton(
-                      onPressed: () => _applyDiscount(10),
-                      child: const Text('10%'),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton(
-                      onPressed: () => _applyDiscount(15),
-                      child: const Text('15%'),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton(
-                      onPressed: () {
-                        setState(() {
-                          _discountPercent = 0.0;
-                          _calculateTotal();
-                        });
-                        _showMessage('Скидка снята');
-                      },
-                      child: const Text('Сброс'),
-                    ),
-                  ],
-                ),
-              ],
+            Text(
+              'Общая сумма: ${_totalAmount.toStringAsFixed(2)} ₽',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green),
             ),
-            const SizedBox(height: 12),
-            // Кнопки действий
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _clearCart,
-                  icon: const Icon(Icons.clear),
-                  label: const Text('Очистить чек'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[400],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: _cartItems.isEmpty 
-                    ? null 
-                    : () => _showMessage('Кнопка "Удалить последнюю позицию" нажата'),
-                  icon: const Icon(Icons.remove_shopping_cart),
-                  label: const Text('Удалить позицию'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange[700],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: _processPayment,
-                  icon: const Icon(Icons.payment),
-                  label: const Text('Оплата'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  ),
-                ),
-              ],
+            const SizedBox(width: 32),
+            ElevatedButton.icon(
+              onPressed: _clearCart,
+              icon: const Icon(Icons.clear),
+              label: const Text('Очистить чек'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[400],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              ),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton.icon(
+              onPressed: _cartItems.isEmpty 
+                ? null 
+                : () => _showMessage('Кнопка "Удалить последнюю позицию" нажата'),
+              icon: const Icon(Icons.remove_shopping_cart),
+              label: const Text('Удалить позицию'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange[700],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              ),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton.icon(
+              onPressed: _processPayment,
+              icon: const Icon(Icons.payment),
+              label: const Text('Оплата'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              ),
             ),
           ],
         ),
