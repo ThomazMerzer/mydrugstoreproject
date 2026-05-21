@@ -1,26 +1,29 @@
 ```
 # Build artifacts
+/build/
 *.dart.js
+*.js
 *.map
-build/
-dist/
-out/
 
 # Dependencies
-.pub-cache/
-.dart_tool/
+.pub/
 .packages
+
+# Logs and temp files
+*.log
+*.tmp
 
 # Environment
 .env
 .env.local
 *.env.*
 
-# Logs
-*.log
-**/logs/
+# Editor/IDE
+.idea/
+.vscode/
+*.swp
+*.swo
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# Testing
+coverage/
 ```

@@ -61,15 +61,6 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // Удалить позицию из чека
-  void _removeItem(int index) {
-    setState(() {
-      _cartItems.removeAt(index);
-      _calculateTotal();
-    });
-    _showMessage('Позиция удалена');
-  }
-
   // Очистить чек
   void _clearCart() {
     setState(() {
