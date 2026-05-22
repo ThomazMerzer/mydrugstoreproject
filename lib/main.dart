@@ -36,14 +36,6 @@ class _MainScreenState extends State<MainScreen> {
   // Общая сумма
   double _totalAmount = 0.0;
 
-  // Ширина столбцов (в логических пикселях)
-  double _nameColumnWidth = 300;
-  double _quantityColumnWidth = 100;
-
-  // Минимальные ширины столбцов (вычисляются по заголовкам)
-  double _minNameWidth = 120;
-  double _minQuantityWidth = 100;
-
   // Пул препаратов для случайного добавления
   final List<Map<String, dynamic>> _drugPool = [
     {'name': 'Парацетамол', 'price': 50.0},
@@ -57,27 +49,18 @@ class _MainScreenState extends State<MainScreen> {
 
   final Random _random = Random();
 
+  // Ширины столбцов (независимые)
+  late double _nameColumnWidth;
+  late double _quantityColumnWidth;
+  late double _priceColumnWidth;
+
+  // Флаг для отслеживания первой отрисовки
+  bool _isInitialized = false;
+
   @override
   void initState() {
     super.initState();
-    // Вычисляем минимальные ширины после постройки контекста
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        _minNameWidth = _getTextWidth('Наименование');
-        _minQuantityWidth = _getTextWidth('Количество');
-      });
-    });
-  }
-
-  // Вычислить ширину текста
-  double _getTextWidth(String text) {
-    final textPainter = TextPainter(
-      text: TextSpan(text: text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-      maxLines: 1,
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    return textPainter.size.width + 16; // Добавляем отступы
+    // Инициализация будет выполнена после первого фрейма
   }
 
   // Показать диалог с сообщением
@@ -143,6 +126,46 @@ class _MainScreenState extends State<MainScreen> {
     _showMessage('Переход к оплате. Сумма: ${_totalAmount.toStringAsFixed(2)} ₽');
   }
 
+  // Обработчик изменения ширины столбца
+  void _resizeColumn(String column, double delta) {
+    setState(() {
+      switch (column) {
+        case 'name':
+          _nameColumnWidth = (_nameColumnWidth + delta).clamp(80.0, double.infinity);
+          break;
+        case 'quantity':
+          _quantityColumnWidth = (_quantityColumnWidth + delta).clamp(60.0, double.infinity);
+          break;
+        case 'price':
+          _priceColumnWidth = (_priceColumnWidth + delta).clamp(60.0, double.infinity);
+          break;
+      }
+    });
+  }
+
+  // Построитель разделителя между столбцами
+  Widget _buildSeparator(String column, {bool isRow = false}) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeLeftRight,
+      child: GestureDetector(
+        onPanUpdate: (details) {
+          _resizeColumn(column, details.delta.dx);
+        },
+        child: Container(
+          width: 20,
+          height: isRow ? 30 : 30,
+          color: Colors.transparent,
+          alignment: Alignment.center,
+          child: Container(
+            width: 1,
+            height: 20,
+            color: Colors.grey[400],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -157,94 +180,129 @@ class _MainScreenState extends State<MainScreen> {
             flex: 3,
             child: Column(
               children: [
-                // Заголовок таблицы с изменяемой шириной столбцов
+                // Заголовок таблицы с IntrinsicWidth для автоматического определения размеров
                 Container(
                   padding: const EdgeInsets.all(8.0),
                   color: Colors.grey[200],
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: _nameColumnWidth,
-                        child: const Text('Наименование', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      // Разделитель для изменения ширины первого столбца
-                      MouseRegion(
-                        cursor: SystemMouseCursors.resizeLeftRight,
-                        child: GestureDetector(
-                          onPanUpdate: (details) {
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // При первой загрузке инициализируем ширины на основе доступного пространства
+                      if (!_isInitialized) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
                             setState(() {
-                              _nameColumnWidth = (_nameColumnWidth + details.delta.dx).clamp(_minNameWidth, 600);
+                              final availableWidth = constraints.maxWidth;
+                              final baseWidth = availableWidth / 3;
+                              _nameColumnWidth = baseWidth;
+                              _quantityColumnWidth = baseWidth;
+                              _priceColumnWidth = baseWidth;
+                              _isInitialized = true;
                             });
-                          },
-                          child: Container(
-                            width: 1,
-                            height: 30,
-                            color: Colors.grey[400],
+                          }
+                        });
+                        // Показываем placeholder до инициализации
+                        return const SizedBox(height: 40);
+                      }
+
+                      return Row(
+                        children: [
+                          // Столбец "Наименование"
+                          SizedBox(
+                            width: _nameColumnWidth,
+                            child: const Text(
+                              'Наименование',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: _quantityColumnWidth,
-                        child: const Text('Количество', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      // Разделитель для изменения ширины второго столбца
-                      MouseRegion(
-                        cursor: SystemMouseCursors.resizeLeftRight,
-                        child: GestureDetector(
-                          onPanUpdate: (details) {
-                            setState(() {
-                              _quantityColumnWidth = (_quantityColumnWidth + details.delta.dx).clamp(_minQuantityWidth, 200);
-                            });
-                          },
-                          child: Container(
-                            width: 1,
-                            height: 30,
-                            color: Colors.grey[400],
+                          // Разделитель 1
+                          _buildSeparator('name'),
+                          // Столбец "Количество"
+                          SizedBox(
+                            width: _quantityColumnWidth,
+                            child: const Text(
+                              'Количество',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Text('Цена', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ],
+                          // Разделитель 2
+                          _buildSeparator('quantity'),
+                          // Столбец "Цена" - гибкий, занимает оставшееся пространство
+                          Expanded(
+                            child: SizedBox(
+                              width: _priceColumnWidth,
+                              child: const Text(
+                                'Цена',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 // Список товаров в чеке
                 Expanded(
                   child: _cartItems.isEmpty
                       ? Center(
-                    child: Text(
-                      'Чек пуст. Отсканируйте штрихкод или QR-код товара.',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                    ),
-                  )
+                          child: Text(
+                            'Чек пуст. Отсканируйте штрихкод или QR-код товара.',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                          ),
+                        )
                       : ListView.builder(
-                    itemCount: _cartItems.length,
-                    itemBuilder: (context, index) {
-                      final item = _cartItems[index];
-                      final isEven = index % 2 == 1;
-                      return Container(
-                        margin: const EdgeInsets.symmetric(vertical: 1.0),
-                        padding: const EdgeInsets.all(8.0),
-                        color: isEven ? Colors.grey[200] : Colors.white,
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: _nameColumnWidth,
-                              child: Text(item['name'], textAlign: TextAlign.center, overflow: TextOverflow.ellipsis),
-                            ),
-                            SizedBox(
-                              width: _quantityColumnWidth,
-                              child: Text('${item['quantity']}', textAlign: TextAlign.center),
-                            ),
-                            Expanded(
-                              child: Text('${(item['price'] as double).toStringAsFixed(2)} ₽', textAlign: TextAlign.center),
-                            ),
-                          ],
+                          itemCount: _cartItems.length,
+                          itemBuilder: (context, index) {
+                            final item = _cartItems[index];
+                            final isEven = index % 2 == 1;
+                            return Container(
+                              margin: const EdgeInsets.symmetric(vertical: 1.0),
+                              padding: const EdgeInsets.all(8.0),
+                              color: isEven ? Colors.grey[200] : Colors.white,
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: _nameColumnWidth,
+                                    child: Text(
+                                      item['name'],
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  _buildSeparator('name', isRow: true),
+                                  SizedBox(
+                                    width: _quantityColumnWidth,
+                                    child: Text(
+                                      '${item['quantity']}',
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  _buildSeparator('quantity', isRow: true),
+                                  // Цена - гибкая колонка
+                                  Expanded(
+                                    child: SizedBox(
+                                      width: _priceColumnWidth,
+                                      child: Text(
+                                        '${(item['price'] as double).toStringAsFixed(2)} ₽',
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
