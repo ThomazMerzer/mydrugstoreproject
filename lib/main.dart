@@ -51,6 +51,8 @@ class _MainScreenState extends State<MainScreen> {
     {'name': 'Пластырь', 'price': 80.0},
     {'name': 'Бинт', 'price': 45.0},
     {'name': 'Крем для рук', 'price': 150.0},
+    {'name': 'Нафтизин', 'price': 60.0},
+    {'name': 'Анальгин', 'price': 40.0},
   ];
 
   final Random _random = Random();
