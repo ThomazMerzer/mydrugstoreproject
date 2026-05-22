@@ -36,14 +36,6 @@ class _MainScreenState extends State<MainScreen> {
   // Общая сумма
   double _totalAmount = 0.0;
 
-  // Ширина столбцов (в логических пикселях)
-  double _nameColumnWidth = 300;
-  double _quantityColumnWidth = 100;
-
-  // Минимальные ширины столбцов (вычисляются по заголовкам)
-  double _minNameWidth = 120;
-  double _minQuantityWidth = 100;
-
   // Пул препаратов для случайного добавления
   final List<Map<String, dynamic>> _drugPool = [
     {'name': 'Парацетамол', 'price': 50.0},
@@ -57,27 +49,39 @@ class _MainScreenState extends State<MainScreen> {
 
   final Random _random = Random();
 
+  // Глобальные ключи для вычисления минимальных ширин
+  final GlobalKey _nameKey = GlobalKey();
+  final GlobalKey _quantityKey = GlobalKey();
+  final GlobalKey _priceKey = GlobalKey();
+
+  // Базовая ширина столбца (вычисляется dynamically)
+  double _columnWidth = 200;
+
+  // Минимальные ширины столбцов
+  double _minColumnWidth = 100;
+
   @override
   void initState() {
     super.initState();
     // Вычисляем минимальные ширины после постройки контекста
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
-        _minNameWidth = _getTextWidth('Наименование');
-        _minQuantityWidth = _getTextWidth('Количество');
+        final nameWidth = _getKeyWidth(_nameKey) ?? 100;
+        final quantityWidth = _getKeyWidth(_quantityKey) ?? 80;
+        final priceWidth = _getKeyWidth(_priceKey) ?? 80;
+        _minColumnWidth = [nameWidth, quantityWidth, priceWidth].reduce((a, b) => a > b ? a : b);
+        _columnWidth = _minColumnWidth;
       });
     });
   }
 
-  // Вычислить ширину текста
-  double _getTextWidth(String text) {
-    final textPainter = TextPainter(
-      text: TextSpan(text: text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-      maxLines: 1,
-      textDirection: TextDirection.ltr,
-    );
-    textPainter.layout();
-    return textPainter.size.width + 16; // Добавляем отступы
+  // Получить ширину виджета по ключу
+  double? _getKeyWidth(GlobalKey key) {
+    final context = key.currentContext;
+    if (context == null) return null;
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null) return null;
+    return renderBox.size.width;
   }
 
   // Показать диалог с сообщением
@@ -157,54 +161,71 @@ class _MainScreenState extends State<MainScreen> {
             flex: 3,
             child: Column(
               children: [
-                // Заголовок таблицы с изменяемой шириной столбцов
+                // Заголовок таблицы
                 Container(
                   padding: const EdgeInsets.all(8.0),
                   color: Colors.grey[200],
                   child: Row(
                     children: [
+                      // Столбец "Наименование"
                       SizedBox(
-                        width: _nameColumnWidth,
-                        child: const Text('Наименование', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                        key: _nameKey,
+                        width: _columnWidth,
+                        child: const Text('Наименование', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
                       ),
-                      // Разделитель для изменения ширины первого столбца
+                      // Разделитель 1
                       MouseRegion(
                         cursor: SystemMouseCursors.resizeLeftRight,
                         child: GestureDetector(
                           onPanUpdate: (details) {
                             setState(() {
-                              _nameColumnWidth = (_nameColumnWidth + details.delta.dx).clamp(_minNameWidth, 600);
+                              _columnWidth = (_columnWidth + details.delta.dx).clamp(_minColumnWidth, MediaQuery.of(context).size.width / 3);
                             });
                           },
                           child: Container(
-                            width: 1,
+                            width: 20,
                             height: 30,
-                            color: Colors.grey[400],
+                            color: Colors.transparent,
+                            child: Container(
+                              width: 1,
+                              height: 20,
+                              color: Colors.grey[400],
+                            ),
                           ),
                         ),
                       ),
+                      // Столбец "Количество"
                       SizedBox(
-                        width: _quantityColumnWidth,
-                        child: const Text('Количество', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                        key: _quantityKey,
+                        width: _columnWidth,
+                        child: const Text('Количество', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
                       ),
-                      // Разделитель для изменения ширины второго столбца
+                      // Разделитель 2
                       MouseRegion(
                         cursor: SystemMouseCursors.resizeLeftRight,
                         child: GestureDetector(
                           onPanUpdate: (details) {
                             setState(() {
-                              _quantityColumnWidth = (_quantityColumnWidth + details.delta.dx).clamp(_minQuantityWidth, 200);
+                              _columnWidth = (_columnWidth + details.delta.dx).clamp(_minColumnWidth, MediaQuery.of(context).size.width / 3);
                             });
                           },
                           child: Container(
-                            width: 1,
+                            width: 20,
                             height: 30,
-                            color: Colors.grey[400],
+                            color: Colors.transparent,
+                            child: Container(
+                              width: 1,
+                              height: 20,
+                              color: Colors.grey[400],
+                            ),
                           ),
                         ),
                       ),
-                      Expanded(
-                        child: Text('Цена', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                      // Столбец "Цена"
+                      SizedBox(
+                        key: _priceKey,
+                        width: _columnWidth,
+                        child: const Text('Цена', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
                       ),
                     ],
                   ),
@@ -230,14 +251,55 @@ class _MainScreenState extends State<MainScreen> {
                         child: Row(
                           children: [
                             SizedBox(
-                              width: _nameColumnWidth,
-                              child: Text(item['name'], textAlign: TextAlign.center, overflow: TextOverflow.ellipsis),
+                              width: _columnWidth,
+                              child: Text(item['name'], textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+                            ),
+                            MouseRegion(
+                              cursor: SystemMouseCursors.resizeLeftRight,
+                              child: GestureDetector(
+                                onPanUpdate: (details) {
+                                  setState(() {
+                                    _columnWidth = (_columnWidth + details.delta.dx).clamp(_minColumnWidth, MediaQuery.of(context).size.width / 3);
+                                  });
+                                },
+                                child: Container(
+                                  width: 20,
+                                  height: 30,
+                                  color: Colors.transparent,
+                                  child: Container(
+                                    width: 1,
+                                    height: 20,
+                                    color: Colors.grey[400],
+                                  ),
+                                ),
+                              ),
                             ),
                             SizedBox(
-                              width: _quantityColumnWidth,
+                              width: _columnWidth,
                               child: Text('${item['quantity']}', textAlign: TextAlign.center),
                             ),
-                            Expanded(
+                            MouseRegion(
+                              cursor: SystemMouseCursors.resizeLeftRight,
+                              child: GestureDetector(
+                                onPanUpdate: (details) {
+                                  setState(() {
+                                    _columnWidth = (_columnWidth + details.delta.dx).clamp(_minColumnWidth, MediaQuery.of(context).size.width / 3);
+                                  });
+                                },
+                                child: Container(
+                                  width: 20,
+                                  height: 30,
+                                  color: Colors.transparent,
+                                  child: Container(
+                                    width: 1,
+                                    height: 20,
+                                    color: Colors.grey[400],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: _columnWidth,
                               child: Text('${(item['price'] as double).toStringAsFixed(2)} ₽', textAlign: TextAlign.center),
                             ),
                           ],
