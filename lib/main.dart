@@ -49,39 +49,18 @@ class _MainScreenState extends State<MainScreen> {
 
   final Random _random = Random();
 
-  // Глобальные ключи для вычисления минимальных ширин
-  final GlobalKey _nameKey = GlobalKey();
-  final GlobalKey _quantityKey = GlobalKey();
-  final GlobalKey _priceKey = GlobalKey();
+  // Ширины столбцов (независимые)
+  late double _nameColumnWidth;
+  late double _quantityColumnWidth;
+  late double _priceColumnWidth;
 
-  // Базовая ширина столбца (вычисляется dynamically)
-  double _columnWidth = 200;
-
-  // Минимальные ширины столбцов
-  double _minColumnWidth = 100;
+  // Флаг для отслеживания первой отрисовки
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    // Вычисляем минимальные ширины после постройки контекста
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        final nameWidth = _getKeyWidth(_nameKey) ?? 100;
-        final quantityWidth = _getKeyWidth(_quantityKey) ?? 80;
-        final priceWidth = _getKeyWidth(_priceKey) ?? 80;
-        _minColumnWidth = [nameWidth, quantityWidth, priceWidth].reduce((a, b) => a > b ? a : b);
-        _columnWidth = _minColumnWidth;
-      });
-    });
-  }
-
-  // Получить ширину виджета по ключу
-  double? _getKeyWidth(GlobalKey key) {
-    final context = key.currentContext;
-    if (context == null) return null;
-    final renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return null;
-    return renderBox.size.width;
+    // Инициализация будет выполнена после первого фрейма
   }
 
   // Показать диалог с сообщением
@@ -147,6 +126,46 @@ class _MainScreenState extends State<MainScreen> {
     _showMessage('Переход к оплате. Сумма: ${_totalAmount.toStringAsFixed(2)} ₽');
   }
 
+  // Обработчик изменения ширины столбца
+  void _resizeColumn(String column, double delta) {
+    setState(() {
+      switch (column) {
+        case 'name':
+          _nameColumnWidth = (_nameColumnWidth + delta).clamp(80.0, double.infinity);
+          break;
+        case 'quantity':
+          _quantityColumnWidth = (_quantityColumnWidth + delta).clamp(60.0, double.infinity);
+          break;
+        case 'price':
+          _priceColumnWidth = (_priceColumnWidth + delta).clamp(60.0, double.infinity);
+          break;
+      }
+    });
+  }
+
+  // Построитель разделителя между столбцами
+  Widget _buildSeparator(String column, {bool isRow = false}) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeLeftRight,
+      child: GestureDetector(
+        onPanUpdate: (details) {
+          _resizeColumn(column, details.delta.dx);
+        },
+        child: Container(
+          width: 20,
+          height: isRow ? 30 : 30,
+          color: Colors.transparent,
+          alignment: Alignment.center,
+          child: Container(
+            width: 1,
+            height: 20,
+            color: Colors.grey[400],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -161,152 +180,129 @@ class _MainScreenState extends State<MainScreen> {
             flex: 3,
             child: Column(
               children: [
-                // Заголовок таблицы
+                // Заголовок таблицы с IntrinsicWidth для автоматического определения размеров
                 Container(
                   padding: const EdgeInsets.all(8.0),
                   color: Colors.grey[200],
-                  child: Row(
-                    children: [
-                      // Столбец "Наименование"
-                      SizedBox(
-                        key: _nameKey,
-                        width: _columnWidth,
-                        child: const Text('Наименование', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      ),
-                      // Разделитель 1
-                      MouseRegion(
-                        cursor: SystemMouseCursors.resizeLeftRight,
-                        child: GestureDetector(
-                          onPanUpdate: (details) {
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // При первой загрузке инициализируем ширины на основе доступного пространства
+                      if (!_isInitialized) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
                             setState(() {
-                              _columnWidth = (_columnWidth + details.delta.dx).clamp(_minColumnWidth, MediaQuery.of(context).size.width / 3);
+                              final availableWidth = constraints.maxWidth;
+                              final baseWidth = availableWidth / 3;
+                              _nameColumnWidth = baseWidth;
+                              _quantityColumnWidth = baseWidth;
+                              _priceColumnWidth = baseWidth;
+                              _isInitialized = true;
                             });
-                          },
-                          child: Container(
-                            width: 20,
-                            height: 30,
-                            color: Colors.transparent,
-                            child: Container(
-                              width: 1,
-                              height: 20,
-                              color: Colors.grey[400],
+                          }
+                        });
+                        // Показываем placeholder до инициализации
+                        return const SizedBox(height: 40);
+                      }
+
+                      return Row(
+                        children: [
+                          // Столбец "Наименование"
+                          SizedBox(
+                            width: _nameColumnWidth,
+                            child: const Text(
+                              'Наименование',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                      ),
-                      // Столбец "Количество"
-                      SizedBox(
-                        key: _quantityKey,
-                        width: _columnWidth,
-                        child: const Text('Количество', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      ),
-                      // Разделитель 2
-                      MouseRegion(
-                        cursor: SystemMouseCursors.resizeLeftRight,
-                        child: GestureDetector(
-                          onPanUpdate: (details) {
-                            setState(() {
-                              _columnWidth = (_columnWidth + details.delta.dx).clamp(_minColumnWidth, MediaQuery.of(context).size.width / 3);
-                            });
-                          },
-                          child: Container(
-                            width: 20,
-                            height: 30,
-                            color: Colors.transparent,
-                            child: Container(
-                              width: 1,
-                              height: 20,
-                              color: Colors.grey[400],
+                          // Разделитель 1
+                          _buildSeparator('name'),
+                          // Столбец "Количество"
+                          SizedBox(
+                            width: _quantityColumnWidth,
+                            child: const Text(
+                              'Количество',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                      ),
-                      // Столбец "Цена"
-                      SizedBox(
-                        key: _priceKey,
-                        width: _columnWidth,
-                        child: const Text('Цена', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      ),
-                    ],
+                          // Разделитель 2
+                          _buildSeparator('quantity'),
+                          // Столбец "Цена" - гибкий, занимает оставшееся пространство
+                          Expanded(
+                            child: SizedBox(
+                              width: _priceColumnWidth,
+                              child: const Text(
+                                'Цена',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
                 // Список товаров в чеке
                 Expanded(
                   child: _cartItems.isEmpty
                       ? Center(
-                    child: Text(
-                      'Чек пуст. Отсканируйте штрихкод или QR-код товара.',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                    ),
-                  )
+                          child: Text(
+                            'Чек пуст. Отсканируйте штрихкод или QR-код товара.',
+                            style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                          ),
+                        )
                       : ListView.builder(
-                    itemCount: _cartItems.length,
-                    itemBuilder: (context, index) {
-                      final item = _cartItems[index];
-                      final isEven = index % 2 == 1;
-                      return Container(
-                        margin: const EdgeInsets.symmetric(vertical: 1.0),
-                        padding: const EdgeInsets.all(8.0),
-                        color: isEven ? Colors.grey[200] : Colors.white,
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: _columnWidth,
-                              child: Text(item['name'], textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-                            ),
-                            MouseRegion(
-                              cursor: SystemMouseCursors.resizeLeftRight,
-                              child: GestureDetector(
-                                onPanUpdate: (details) {
-                                  setState(() {
-                                    _columnWidth = (_columnWidth + details.delta.dx).clamp(_minColumnWidth, MediaQuery.of(context).size.width / 3);
-                                  });
-                                },
-                                child: Container(
-                                  width: 20,
-                                  height: 30,
-                                  color: Colors.transparent,
-                                  child: Container(
-                                    width: 1,
-                                    height: 20,
-                                    color: Colors.grey[400],
+                          itemCount: _cartItems.length,
+                          itemBuilder: (context, index) {
+                            final item = _cartItems[index];
+                            final isEven = index % 2 == 1;
+                            return Container(
+                              margin: const EdgeInsets.symmetric(vertical: 1.0),
+                              padding: const EdgeInsets.all(8.0),
+                              color: isEven ? Colors.grey[200] : Colors.white,
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: _nameColumnWidth,
+                                    child: Text(
+                                      item['name'],
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              width: _columnWidth,
-                              child: Text('${item['quantity']}', textAlign: TextAlign.center),
-                            ),
-                            MouseRegion(
-                              cursor: SystemMouseCursors.resizeLeftRight,
-                              child: GestureDetector(
-                                onPanUpdate: (details) {
-                                  setState(() {
-                                    _columnWidth = (_columnWidth + details.delta.dx).clamp(_minColumnWidth, MediaQuery.of(context).size.width / 3);
-                                  });
-                                },
-                                child: Container(
-                                  width: 20,
-                                  height: 30,
-                                  color: Colors.transparent,
-                                  child: Container(
-                                    width: 1,
-                                    height: 20,
-                                    color: Colors.grey[400],
+                                  _buildSeparator('name', isRow: true),
+                                  SizedBox(
+                                    width: _quantityColumnWidth,
+                                    child: Text(
+                                      '${item['quantity']}',
+                                      textAlign: TextAlign.center,
+                                    ),
                                   ),
-                                ),
+                                  _buildSeparator('quantity', isRow: true),
+                                  // Цена - гибкая колонка
+                                  Expanded(
+                                    child: SizedBox(
+                                      width: _priceColumnWidth,
+                                      child: Text(
+                                        '${(item['price'] as double).toStringAsFixed(2)} ₽',
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            SizedBox(
-                              width: _columnWidth,
-                              child: Text('${(item['price'] as double).toStringAsFixed(2)} ₽', textAlign: TextAlign.center),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
