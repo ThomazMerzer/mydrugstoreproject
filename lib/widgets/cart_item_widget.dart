@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'column_separator_widget.dart';
 
 class CartItemWidget extends StatelessWidget {
   final String name;
@@ -31,7 +32,7 @@ class CartItemWidget extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          _buildSeparator(),
+          const ColumnSeparatorWidget(),
           SizedBox(
             width: 100,
             child: Text(
@@ -39,7 +40,7 @@ class CartItemWidget extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-          _buildSeparator(),
+          const ColumnSeparatorWidget(),
           Expanded(
             child: Text(
               '${price.toStringAsFixed(2)} ₽',
@@ -47,26 +48,6 @@ class CartItemWidget extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSeparator() {
-    return MouseRegion(
-      cursor: SystemMouseCursors.resizeLeftRight,
-      child: GestureDetector(
-        onPanUpdate: (details) {},
-        child: Container(
-          width: 20,
-          height: 30,
-          color: Colors.transparent,
-          alignment: Alignment.center,
-          child: Container(
-            width: 1,
-            height: 20,
-            color: Colors.grey[400],
-          ),
-        ),
       ),
     );
   }

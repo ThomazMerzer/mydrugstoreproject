@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'column_separator_widget.dart';
 
 class TopHeaderWidget extends StatelessWidget {
   const TopHeaderWidget({super.key});
@@ -20,7 +21,7 @@ class TopHeaderWidget extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          _buildSeparator(),
+          const ColumnSeparatorWidget(),
           SizedBox(
             width: 100,
             child: const Text(
@@ -31,7 +32,7 @@ class TopHeaderWidget extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          _buildSeparator(),
+          const ColumnSeparatorWidget(),
           const Expanded(
             child: Text(
               'Цена',
@@ -42,26 +43,6 @@ class TopHeaderWidget extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSeparator() {
-    return MouseRegion(
-      cursor: SystemMouseCursors.resizeLeftRight,
-      child: GestureDetector(
-        onPanUpdate: (details) {},
-        child: Container(
-          width: 20,
-          height: 30,
-          color: Colors.transparent,
-          alignment: Alignment.center,
-          child: Container(
-            width: 1,
-            height: 20,
-            color: Colors.grey[400],
-          ),
-        ),
       ),
     );
   }

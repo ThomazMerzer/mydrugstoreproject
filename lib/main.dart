@@ -37,7 +37,6 @@ class _MainScreenState extends State<MainScreen> {
   final List<Map<String, dynamic>> _cartItems = [];
   double _totalAmount = 0.0;
   final Random _random = Random();
-  bool _isInitialized = false;
 
   final List<Map<String, dynamic>> _drugPool = [
     {'name': 'Парацетамол', 'price': 50.0},
