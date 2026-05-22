@@ -1,58 +1,45 @@
 ```
 # Build artifacts
+*.class
 *.o
 *.obj
 *.exe
 *.dll
-*.lib
-*.pdb
-*.exp
-*.ilk
-*.res
+*.so
+*.a
+*.out
+build/
+dist/
+target/
 
 # Dependencies
 node_modules/
 venv/
 .venv/
 __pycache__/
-*.egg-info/
-dist/
-build/
-target/
+.mypy_cache/
+.pytest_cache/
 .gradle/
 
-# Logs and temp files
-*.log
-*.tmp
-*.temp
-*.swp
-*.swo
-
-# Environment
-.env
-.env.local
-*.env.*
-
-# Editors
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
+*.tmp
 
-# OS
+# System files
 .DS_Store
 Thumbs.db
+.env
+.env.local
+*.env.*
 
-# Coverage
+# Logs and coverage
+*.log
 coverage/
 htmlcov/
 .coverage
-
-# Python
-*.pyc
-__pycache__/
-.pytest_cache/
-.mypy_cache/
 
 # Compressed files
 *.zip
